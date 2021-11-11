@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "C:/Users/mitch/CLionProjects/gravsim/main.cpp" "C:/Users/mitch/CLionProjects/gravsim/cmake-build-debug/CMakeFiles/gravsim.dir/main.cpp.obj"
+  "C:/Users/mitch/Documents/GitHub/gravSim/main.cpp" "C:/Users/mitch/Documents/GitHub/gravSim/cmake-build-debug/CMakeFiles/gravsim.dir/main.cpp.obj"
   )
 set(CMAKE_CXX_COMPILER_ID "MSVC")
 

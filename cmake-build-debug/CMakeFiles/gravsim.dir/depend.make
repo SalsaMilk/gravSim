@@ -17,6 +17,7 @@ CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_gamecontroller.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_gesture.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_haptic.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_hints.h
+CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_image.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_joystick.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_keyboard.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_keycode.h
@@ -50,4 +51,6 @@ CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\SDL_video.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\begin_code.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\SDL\close_code.h
 CMakeFiles\gravsim.dir\main.cpp.obj: ..\main.cpp
+CMakeFiles\gravsim.dir\main.cpp.obj: ..\object.h
+CMakeFiles\gravsim.dir\main.cpp.obj: ..\util.h
 
