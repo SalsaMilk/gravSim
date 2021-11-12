@@ -5,6 +5,10 @@
 #ifndef GRAVSIM_UTIL_H
 #define GRAVSIM_UTIL_H
 
+typedef struct {
+    float x, y;
+} Vector2, Point;
+
 // thanks to https://stackoverflow.com/a/48291620/14160311
 void DrawCircle(SDL_Renderer *renderer, int x, int y, int radius)
 {

@@ -30,7 +30,10 @@ int main(int argc, char *argv[]) {
     r = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
 
-    auto *earth = new Object(150, 100, 40, 100, 5, 5);
+    auto *earth = new Object(150, 200, 40, 100, 3, 3);
+    auto *moon  = new Object(300, 200, 16, 50, 0, 0);
+
+
 
     while(running) {
         SDL_Event event;
@@ -45,6 +48,7 @@ int main(int argc, char *argv[]) {
                 case SDL_KEYDOWN:
                     switch (event.key.keysym.scancode) {
                         case SDL_SCANCODE_ESCAPE:
+                            running = false;
                             break;
                         default:
                             break;
@@ -59,6 +63,11 @@ int main(int argc, char *argv[]) {
 
         earth->move();
         earth->draw();
+        earth->drawVelocity();
+        earth->drawAcceleration();
+
+        moon->move();
+        moon->draw();
 
         SDL_RenderPresent(r);
 
