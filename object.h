@@ -7,13 +7,13 @@
 
 class Object {
 private:
-    int32_t density      = 100;
-    int32_t mass         = 1000;
-    Vector2 acceleration = {0.0f, 0.0f};
+    float density      = 100;
 public:
+    Vector2 acceleration = {0.0f, 0.0f};
+    float mass          = 1000.0f;
     Point   pos         = {10.0f, 10.0f};
     Vector2 velocity    = {0.0f, 0.0f};
-    SDL_Color color     = {255, 255, 255, 255};
+    SDL_Color color     = {0, 0, 0, 255};
     int32_t radius      = 10;
 
     void draw() const {
@@ -35,22 +35,23 @@ public:
     }
 
     void move() {
-        pos.x += velocity.x;
-        pos.y += velocity.y;
+        pos = pos+velocity;
+        //pos.x += velocity.x;
+        //pos.y += velocity.y;
         velocity.x += acceleration.x;
         velocity.y += acceleration.y;
     }
     
     Object() = default;
     
-    Object(float px, float py, int32_t _radius, int32_t _mass, float vx, float vy) {
+    Object(float px, float py, int32_t _radius, float _mass, float vx, float vy) {
         pos         = Point {px, py};
         velocity    = Point {vx, vy};
         radius      = _radius;
         mass        = _mass;
-        density     = _mass/_radius;
-        color.r = 255 * (1.0f - 1.0f / (float)density);
-        color.g = 255 * (1.0f / (float)density);
+        density     = _mass/(float)_radius;
+        color.b = 255 * (1.0f - 1.0f / (float)density);
+        color.g = 255 * density < 1.0f ? density : (1.0f / (float)density);
     }
 };
 
