@@ -6,10 +6,10 @@
 #define GRAVSIM_UTIL_H
 
 typedef struct {
-    float x, y;
+    double x, y;
 } Vector2, Point;
 
-float distance(Point p1, Point p2) {
+double distance(Point p1, Point p2) {
     return sqrt((p1.x - p2.x)*(p1.x - p2.x) + (p1.y - p2.y)*(p1.y - p2.y));
 }
 
@@ -21,24 +21,28 @@ Point operator- (const Point &p1, const Point &p2) {
     return Point {p1.x - p2.x, p1.y - p2.y};
 }
 
-Point operator/ (const Point &p1, const Point &p2) {
-    return Point {p1.x / p2.x, p1.y / p2.y};
-}
-
 Point operator* (const Point &p1, const Point &p2) {
     return Point {p1.x * p2.x, p1.y * p2.y};
 }
 
-Point operator* (const Point &p1, const float &i) {
+Point operator* (const Point &p1, const double &i) {
     return Point {p1.x * i, p1.y * i};
 }
 
-float vec_length(Vector2 vec) {
+Point operator/ (const Point &p1, const Point &p2) {
+    return Point {p1.x / p2.x, p1.y / p2.y};
+}
+
+Point operator/ (const Point &p1, const double &i) {
+    return Point {p1.x / i, p1.y / i};
+}
+
+double vec_length(Vector2 vec) {
     return sqrt(vec.x*vec.x + vec.y*vec.y);
 }
 
 Vector2 vec_normalize(Vector2 vec) {
-    float len = vec_length(vec);
+    double  len = vec_length(vec);
     return Vector2 {vec.x/len, vec.y/len};
 }
 
@@ -52,9 +56,7 @@ void DrawCircle(SDL_Renderer *renderer, int x, int y, int radius)
             int dx = radius - w; // horizontal offset
             int dy = radius - h; // vertical offset
             if ((dx*dx + dy*dy) <= (radius * radius))
-            {
                 SDL_RenderDrawPoint(renderer, x + dx, y + dy);
-            }
         }
     }
 }
