@@ -6,7 +6,7 @@
 #include "SDL/SDL.h"
 #include "SDL/SDL_image.h"
 
-#define FRAMERATE 60
+#include "config.h"
 
 SDL_Renderer* r;
 
@@ -15,10 +15,33 @@ SDL_Renderer* r;
 
 std::vector<Object*> objects;
 
+/* returns the target object's vector index
+ * -1 if pos in open space */
+int getObjectFromPos(SDL_Point point) {
+    for (int i = 0; i < objects.size(); i++) {
+        float d = distance(Point{(float)point.x, (float)point.y}, objects[i]->pos);
+        if (d < objects[i]->radius)
+            return i;
+    }
+    return -1;
+}
+
+SDL_Point windowPos = {0, 0};
+BOOL dragging = false;
+int dragObject = -1;
+
 void explode(Object *o) {
     for (auto i = 0; i < objects.size(); i++) {
-        if (objects[i] == o)
+        if (objects[i] == o) {
+            if (dragObject == -1) {
+                objects.erase(objects.begin() + i);
+                break;
+            }
+            if (objects[dragObject] == o)
+                dragging = false;
             objects.erase(objects.begin() + i);
+            break;
+        }
     }
     /* somehow do a cool explosion*/
 }
@@ -43,17 +66,37 @@ int main(int argc, char *argv[]) {
     r = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
 
-    objects.push_back(new Object(500, 350, 50, 30000.0, 0, 0, 255, 255, 0, 255));
-    objects.push_back(new Object(200, 350, 16, 8.0, 0, 8, 0, 255, 255, 255));
+    objects.push_back(new Object(500, 350, 50, 3000.0f, 0, 0, 255, 255, 0, 255));
+    objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
+    objects.push_back(new Object(700, 350, 16, 30.0f, 0, -4, 0, 255, 255, 255));
+    objects.push_back(new Object(500, 550, 16, 30.0f, 4, 0, 0, 255, 255, 255));
+    objects.push_back(new Object(500, 150, 16, 30.0f, -4, 0, 0, 255, 255, 255));
+    //objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
+    //objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
+
+    // mouse drag variables
+    SDL_Point lastPos;
+    SDL_Point currentPos;
 
     while(running) {
         SDL_Event event;
 
-        while (SDL_PollEvent(&event)) {
+        if (SDL_PollEvent(&event)) {
             switch (event.type) {
 
                 case SDL_QUIT:
                     running = false;
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    dragging = true;
+                    SDL_GetWindowPosition(win, &windowPos.x, &windowPos.y);
+                    GetCursorPos(reinterpret_cast<LPPOINT>(&currentPos));
+                    currentPos = currentPos-windowPos;
+                    dragObject = getObjectFromPos(currentPos);
+                    //dragObject = getObjectFromPos<LPPOINT>(currentPos);
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    dragging = false;
                     break;
 
                 case SDL_KEYDOWN:
@@ -64,29 +107,24 @@ int main(int argc, char *argv[]) {
                         case SDL_SCANCODE_P:
                             paused = !paused;
                             break;
-                        case SDL_SCANCODE_UP:
-                            for (auto & o : objects) {
-                                o->pos = o->pos+Point {0, -30};
-                            }
-                            break;
-                        case SDL_SCANCODE_DOWN:
-                            for (auto & o : objects) {
-                                o->pos = o->pos+Point {0, 30};
-                            }
-                            break;
-                        case SDL_SCANCODE_LEFT:
-                            for (auto & o : objects) {
-                                o->pos = o->pos+Point {-30, 0};
-                            }
-                            break;
-                        case SDL_SCANCODE_RIGHT:
-                            for (auto & o : objects) {
-                                o->pos = o->pos+Point {30, 0};
-                            }
-                            break;
                         default:
                             break;
                     }
+            }
+        }
+
+        if (dragging) {
+            lastPos = currentPos;
+            GetCursorPos(reinterpret_cast<LPPOINT>(&currentPos));
+            currentPos = currentPos-windowPos;
+            auto diffPos = Point{(float)currentPos.x-lastPos.x, (float)currentPos.y-lastPos.y};
+            if (dragObject == -1) {
+                for (auto &o: objects) {
+                    o->pos = o->pos + diffPos;
+                }
+            }
+            else {
+                objects[dragObject]->pos = objects[dragObject]->pos + diffPos;
             }
         }
 
@@ -103,11 +141,10 @@ int main(int argc, char *argv[]) {
         for (Object* o1 : objects) {
             for (Object* o2 : objects) {
                 if (o1 != o2) {
-                    double dist = distance(o1->pos, o2->pos);
-                    double force = (o1->mass*o2->mass)/(dist*dist);
+                    float dist = distance(o1->pos, o2->pos);
+                    float force = (o1->mass*o2->mass)/(dist*dist);
 
-                    o1->acceleration = o1->acceleration + vec_normalize(o2->pos-o1->pos) * (force/(double)o1->mass);
-                    //o2->acceleration = vec_normalize(o1->pos-o2->pos) * (force/(double)o2->mass);
+                    o1->acceleration = o1->acceleration + vec_normalize(o2->pos-o1->pos) * (force/(float)o1->mass);
 
                     if (distance(o1->pos+o1->velocity, o2->pos+o2->velocity) < o1->radius+o2->radius-3) {
                         o1->radius > o2->radius ? explode(o2) : explode(o1);
@@ -127,9 +164,13 @@ int main(int argc, char *argv[]) {
 
         SDL_RenderPresent(r);
 
-        SDL_Delay(1000 / FRAMERATE);
+        SDL_Delay(1000 / cfg::framerate);
     }
+
+    // time to clean up all the garbage
+
     for (Object *o : objects) { free(o); }
+    objects.clear();
 
     SDL_DestroyRenderer(r);
 
