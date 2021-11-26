@@ -9,9 +9,11 @@
 #include "config.h"
 
 SDL_Renderer* r;
+SDL_Point windowPos = {0, 0};
 
 #include "util.h"
 #include "object.h"
+#include "menu.h"
 
 std::vector<Object*> objects;
 
@@ -26,18 +28,17 @@ int getObjectFromPos(SDL_Point point) {
     return -1;
 }
 
-SDL_Point windowPos = {0, 0};
 BOOL dragging = false;
-int dragObject = -1;
+int selectedObject = -1;
 
 void explode(Object *o) {
     for (auto i = 0; i < objects.size(); i++) {
         if (objects[i] == o) {
-            if (dragObject == -1) {
+            if (selectedObject == -1) {
                 objects.erase(objects.begin() + i);
                 break;
             }
-            if (objects[dragObject] == o)
+            if (objects[selectedObject] == o)
                 dragging = false;
             objects.erase(objects.begin() + i);
             break;
@@ -66,13 +67,13 @@ int main(int argc, char *argv[]) {
     r = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
 
+    //int Object::objectCounter = 0;
+
     objects.push_back(new Object(500, 350, 50, 3000.0f, 0, 0, 255, 255, 0, 255));
     objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
     objects.push_back(new Object(700, 350, 16, 30.0f, 0, -4, 0, 255, 255, 255));
     objects.push_back(new Object(500, 550, 16, 30.0f, 4, 0, 0, 255, 255, 255));
     objects.push_back(new Object(500, 150, 16, 30.0f, -4, 0, 0, 255, 255, 255));
-    //objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
-    //objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
 
     // mouse drag variables
     SDL_Point lastPos;
@@ -92,8 +93,7 @@ int main(int argc, char *argv[]) {
                     SDL_GetWindowPosition(win, &windowPos.x, &windowPos.y);
                     GetCursorPos(reinterpret_cast<LPPOINT>(&currentPos));
                     currentPos = currentPos-windowPos;
-                    dragObject = getObjectFromPos(currentPos);
-                    //dragObject = getObjectFromPos<LPPOINT>(currentPos);
+                    selectedObject = getObjectFromPos(currentPos);
                     break;
                 case SDL_MOUSEBUTTONUP:
                     dragging = false;
@@ -118,17 +118,17 @@ int main(int argc, char *argv[]) {
             GetCursorPos(reinterpret_cast<LPPOINT>(&currentPos));
             currentPos = currentPos-windowPos;
             auto diffPos = Point{(float)currentPos.x-lastPos.x, (float)currentPos.y-lastPos.y};
-            if (dragObject == -1) {
+            if (selectedObject == -1) {
                 for (auto &o: objects) {
                     o->pos = o->pos + diffPos;
                 }
             }
             else {
-                objects[dragObject]->pos = objects[dragObject]->pos + diffPos;
+                objects[selectedObject]->pos = objects[selectedObject]->pos + diffPos;
             }
         }
 
-        SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(r, cfg::bg);
 
         // clear the screen
         SDL_RenderClear(r);
@@ -141,15 +141,14 @@ int main(int argc, char *argv[]) {
         for (Object* o1 : objects) {
             for (Object* o2 : objects) {
                 if (o1 != o2) {
+
                     float dist = distance(o1->pos, o2->pos);
                     float force = (o1->mass*o2->mass)/(dist*dist);
 
                     o1->acceleration = o1->acceleration + vec_normalize(o2->pos-o1->pos) * (force/(float)o1->mass);
 
-                    if (distance(o1->pos+o1->velocity, o2->pos+o2->velocity) < o1->radius+o2->radius-3) {
+                    if (distance(o1->pos+o1->velocity, o2->pos+o2->velocity) < o1->radius+o2->radius-3)
                         o1->radius > o2->radius ? explode(o2) : explode(o1);
-                    }
-
                 }
             }
         }
@@ -158,9 +157,15 @@ int main(int argc, char *argv[]) {
             o->draw();
             o->drawVelocity();
             o->drawAcceleration();
-            if (!paused)
-                o->move();
         }
+        if (selectedObject != -1)
+            objects[selectedObject]->drawSelected();
+
+        if (!paused)
+            for (int i = 0; i < objects.size(); i++) {
+                if (i == selectedObject && dragging) continue;
+                objects[i]->move();
+            }
 
         SDL_RenderPresent(r);
 

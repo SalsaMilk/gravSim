@@ -50,6 +50,17 @@ Vector2 vec_normalize(Vector2 vec) {
     return Vector2 {vec.x/len, vec.y/len};
 }
 
+SDL_Point getLocalMousePos() {
+    SDL_Point tempPoint;
+    GetCursorPos(reinterpret_cast<LPPOINT>(&tempPoint));
+    return tempPoint-windowPos;
+}
+
+inline int SDL_SetRenderDrawColor(SDL_Renderer *renderer, SDL_Color color) {
+    return SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+}
+
+
 // thanks to https://stackoverflow.com/a/48291620/14160311
 void DrawFilledCircle(SDL_Renderer *renderer, int x, int y, int radius)
 {
@@ -65,5 +76,43 @@ void DrawFilledCircle(SDL_Renderer *renderer, int x, int y, int radius)
     }
 }
 
+// https://stackoverflow.com/a/48291620/14160311
+void DrawCircle(SDL_Renderer *renderer, int32_t cx, int32_t cy, int32_t radius)
+{
+    const int32_t diameter = (radius * 2);
+
+    int32_t x = (radius - 1);
+    int32_t y = 0;
+    int32_t tx = 1;
+    int32_t ty = 1;
+    int32_t error = (tx - diameter);
+
+    while (x >= y)
+    {
+        //  Each of the following renders an octant of the circle
+        SDL_RenderDrawPoint(renderer, cx + x, cy - y);
+        SDL_RenderDrawPoint(renderer, cx + x, cy + y);
+        SDL_RenderDrawPoint(renderer, cx - x, cy - y);
+        SDL_RenderDrawPoint(renderer, cx - x, cy + y);
+        SDL_RenderDrawPoint(renderer, cx + y, cy - x);
+        SDL_RenderDrawPoint(renderer, cx + y, cy + x);
+        SDL_RenderDrawPoint(renderer, cx - y, cy - x);
+        SDL_RenderDrawPoint(renderer, cx - y, cy + x);
+
+        if (error <= 0)
+        {
+            ++y;
+            error += ty;
+            ty += 2;
+        }
+
+        if (error > 0)
+        {
+            --x;
+            tx += 2;
+            error += (tx - diameter);
+        }
+    }
+}
 
 #endif //GRAVSIM_UTIL_H

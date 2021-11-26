@@ -5,4 +5,8 @@
 #ifndef GRAVSIM_MENU_H
 #define GRAVSIM_MENU_H
 
+void drawMainMenu() {
+
+}
+
 #endif //GRAVSIM_MENU_H

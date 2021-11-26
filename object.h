@@ -8,16 +8,29 @@
 class Object {
 private:
 public:
+    static int objectCounter;
+
     Vector2 acceleration = {0.0f, 0.0f};
-    float mass          = 1000.0f;
     Point   pos         = {10.0f, 10.0f};
     Vector2 velocity    = {0.0f, 0.0f};
     SDL_Color color     = {100, 100, 100, 255};
+
+    float mass          = 1000.0f;
+    int ID;
     int32_t radius      = 10;
+
+    bool selected = false;
 
     void draw() const {
         SDL_SetRenderDrawColor(r, color.r, color.g, color.b, color.a);
         DrawFilledCircle(r, pos.x, pos.y, radius);
+    }
+
+    void drawSelected() const {
+        SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
+        DrawCircle(r, pos.x, pos.y, radius + 3);
+        DrawCircle(r, pos.x, pos.y, radius + 4);
+        DrawCircle(r, pos.x, pos.y, radius + 5);
     }
 
     void drawVelocity() const {
@@ -49,6 +62,7 @@ public:
         velocity    = Point {vx, vy};
         radius      = _radius;
         mass        = _mass;
+        ID          = objectCounter++;
     }
 
     Object(float px, float py, int32_t _radius, float _mass, float vx, float vy, BYTE _r, BYTE _g, BYTE _b, BYTE _a) {
