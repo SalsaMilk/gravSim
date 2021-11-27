@@ -5,6 +5,11 @@
 #ifndef GRAVSIM_UTIL_H
 #define GRAVSIM_UTIL_H
 
+#define PI 3.14159265f
+#define SQRT3 1.73205f
+
+#define ZEROTOHALF (((float) rand() / (RAND_MAX))/2)
+
 typedef struct {
     float x, y;
 } Vector2, Point;
@@ -54,6 +59,25 @@ SDL_Point getLocalMousePos() {
     SDL_Point tempPoint;
     GetCursorPos(reinterpret_cast<LPPOINT>(&tempPoint));
     return tempPoint-windowPos;
+}
+
+Point rotate_point(float cx, float cy, float angle, Point p)
+{
+    float s = sin(angle);
+    float c = cos(angle);
+
+    // translate point back to origin:
+    p.x -= cx;
+    p.y -= cy;
+
+    // rotate point
+    float xnew = p.x * c - p.y * s;
+    float ynew = p.x * s + p.y * c;
+
+    // translate point back:
+    p.x = xnew + cx;
+    p.y = ynew + cy;
+    return p;
 }
 
 inline int SDL_SetRenderDrawColor(SDL_Renderer *renderer, SDL_Color color) {

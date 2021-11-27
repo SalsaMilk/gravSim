@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <vector>
 #include <cmath>
+#include <ctime>
 
 #include "SDL/SDL.h"
 #include "SDL/SDL_image.h"
@@ -16,6 +17,7 @@ SDL_Point windowPos = {0, 0};
 #include "menu.h"
 
 std::vector<Object*> objects;
+std::vector<Debris*> extras;
 
 /* returns the target object's vector index
  * -1 if pos in open space */
@@ -32,25 +34,33 @@ BOOL dragging = false;
 int selectedObject = -1;
 
 void explode(Object *o) {
+    for (int i = 0; i < o->radius/2; i++) {
+        extras.push_back(new Debris(o->pos, rand(), rotate_point(o->pos.x, o->pos.y, (ZEROTOHALF - 0.25f)*0.01f, o->velocity/(2.0f-ZEROTOHALF)),
+                                    4, SDL_Color{255, (unsigned char) (ZEROTOHALF * 255), 0, 255}));
+    }
+
     for (auto i = 0; i < objects.size(); i++) {
         if (objects[i] == o) {
             if (selectedObject == -1) {
                 objects.erase(objects.begin() + i);
                 break;
             }
-            if (objects[selectedObject] == o)
+            if (objects[selectedObject] == o) {
+                selectedObject = -1;
                 dragging = false;
+            }
             objects.erase(objects.begin() + i);
             break;
         }
     }
-    /* somehow do a cool explosion*/
 }
 
 BOOL running = true;
 BOOL paused = false;
 
 int main(int argc, char *argv[]) {
+    srand(time(NULL));
+
     // SDL_Init returns 0 on success
     if (SDL_Init(SDL_INIT_EVERYTHING)) {
         printf("error initializing SDL: %s\n", SDL_GetError());
@@ -71,7 +81,7 @@ int main(int argc, char *argv[]) {
 
     objects.push_back(new Object(500, 350, 50, 3000.0f, 0, 0, 255, 255, 0, 255));
     objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
-    objects.push_back(new Object(700, 350, 16, 30.0f, 0, -4, 0, 255, 255, 255));
+    objects.push_back(new Object(700, 350, 16, 30.0f, 0, 0, 0, 255, 255, 255));
     objects.push_back(new Object(500, 550, 16, 30.0f, 4, 0, 0, 255, 255, 255));
     objects.push_back(new Object(500, 150, 16, 30.0f, -4, 0, 0, 255, 255, 255));
 
@@ -79,7 +89,10 @@ int main(int argc, char *argv[]) {
     SDL_Point lastPos;
     SDL_Point currentPos;
 
+    Uint32 start_time, frame_time;
     while(running) {
+        start_time = SDL_GetTicks();
+
         SDL_Event event;
 
         if (SDL_PollEvent(&event)) {
@@ -161,15 +174,28 @@ int main(int argc, char *argv[]) {
         if (selectedObject != -1)
             objects[selectedObject]->drawSelected();
 
-        if (!paused)
+        if (!paused) {
             for (int i = 0; i < objects.size(); i++) {
                 if (i == selectedObject && dragging) continue;
                 objects[i]->move();
             }
+            for (int i = 0; i < extras.size(); i++) {
+                extras[i]->update();
+                if (extras[i]->color.a == 0) {
+                    extras.erase(extras.begin() + i);
+                    continue;
+                }
+                extras[i]->draw();
+            }
+        }
 
         SDL_RenderPresent(r);
 
-        SDL_Delay(1000 / cfg::framerate);
+        frame_time = SDL_GetTicks()-start_time;
+
+        auto frameDelay = (Uint8)((1000.0f / cfg::framerate) - frame_time);
+        if (frameDelay < 0) continue;
+        SDL_Delay(frameDelay);
     }
 
     // time to clean up all the garbage

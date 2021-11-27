@@ -8,7 +8,7 @@
 // everything that should be configurable in the menu
 namespace cfg {
     SDL_Color bg = {0, 0, 0, 255};      // Background color
-    unsigned long framerate = 60;       // Framerate limit
+    float framerate = 60.0f;       // Framerate limit
 
 }
 
