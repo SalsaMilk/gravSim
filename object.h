@@ -75,17 +75,26 @@ private:
     float sideLength;
 public:
     Point v1, v2, v3; // vertices
+    Point pos;
     Vector2 velocity;
     SDL_Color color;
 
     void draw() const {
         SDL_SetRenderDrawColor(r, color);
+/*
+        SDL_RenderDrawLine(r, v1.x, v1.y, v2.x, v2.y);
+        SDL_RenderDrawLine(r, v2.x, v2.y, v3.x, v3.y);
+        SDL_RenderDrawLine(r, v3.x, v3.y, v1.x, v1.y);
+*/
+
         for (int i = 0; i < sideLength; i++) { // VERY scuffed way to draw a triangle
             SDL_RenderDrawLine(r, v1.x + ((v2.x-v1.x)/sideLength)*i,
                                   v1.y + ((v2.y-v1.y)/sideLength)*i,
                                   v1.x + ((v3.x-v1.x)/sideLength)*i,
                                   v1.y + ((v3.y-v1.y)/sideLength)*i);
         }
+
+
     }
 
     void update() {
@@ -100,6 +109,8 @@ public:
         v1 = rotate_point(_pos.x, _pos.y, rotation, (_pos + Point {0, _size*2}));
         v2 = rotate_point(_pos.x, _pos.y, rotation, (_pos + Point {SQRT3*_size , -_size}));
         v3 = rotate_point(_pos.x, _pos.y, rotation, (_pos + Point {-SQRT3*_size , -_size}));
+
+        pos = _pos;
 
         velocity    = _velocity;
         color       = _color;

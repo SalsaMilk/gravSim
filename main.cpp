@@ -106,7 +106,9 @@ int main(int argc, char *argv[]) {
                     SDL_GetWindowPosition(win, &windowPos.x, &windowPos.y);
                     GetCursorPos(reinterpret_cast<LPPOINT>(&currentPos));
                     currentPos = currentPos-windowPos;
+                    if (selectedObject >= 0) objects[selectedObject]->selected = false;
                     selectedObject = getObjectFromPos(currentPos);
+                    if (selectedObject >= 0) objects[selectedObject]->selected = true;
                     break;
                 case SDL_MOUSEBUTTONUP:
                     dragging = false;
@@ -153,8 +155,7 @@ int main(int argc, char *argv[]) {
         }
         for (Object* o1 : objects) {
             for (Object* o2 : objects) {
-                if (o1 != o2) {
-
+                if (o1 != o2 && !(o1->selected && dragging)) {
                     float dist = distance(o1->pos, o2->pos);
                     float force = (o1->mass*o2->mass)/(dist*dist);
 
