@@ -3,7 +3,12 @@ project(gravsim)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(gravsim main.cpp object.h util.h config.h menu.h)
+file(GLOB SOURCE
+        *.cpp
+        SDL/*.c
+        )
+
+add_executable(gravsim ${SOURCE})
 
 file(GLOB LIBS
         lib/*.lib)

@@ -19,25 +19,22 @@ public:
     bool selected = false;
 
     void draw() const {
-        SDL_SetRenderDrawColor(r, color.r, color.g, color.b, color.a);
-        DrawFilledCircle(r, pos.x, pos.y, radius);
+        aaFilledCircle(ren, pos.x, pos.y, radius, color.r, color.g, color.b, color.a);
     }
 
     void drawSelected() const {
-        SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
-        DrawCircle(r, pos.x, pos.y, radius + 3);
-        DrawCircle(r, pos.x, pos.y, radius + 4);
-        DrawCircle(r, pos.x, pos.y, radius + 5);
+        aacircleRGBA(ren, pos.x, pos.y, radius + 3, 255, 255, 255, 255);
+        aaellipseRGBA(ren, pos.x, pos.y, radius + 4, radius + 5, 255, 255, 255, 255);
+        aaellipseRGBA(ren, pos.x, pos.y, radius + 5, radius + 4, 255, 255, 255, 255);
+        aacircleRGBA(ren, pos.x, pos.y, radius + 5, 255, 255, 255, 255);
     }
 
     void drawVelocity() const {
-        SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
-        SDL_RenderDrawLine(r, pos.x, pos.y, pos.x+velocity.x*20.0f, pos.y+velocity.y*20.0f);
+        aalineRGBA(ren, pos.x, pos.y, pos.x + velocity.x * 20.0f, pos.y + velocity.y * 20.0f, 255, 0, 0, 255);
     }
 
     void drawAcceleration() const {
-        SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
-        SDL_RenderDrawLine(r, pos.x, pos.y, pos.x+acceleration.x*300.0f, pos.y+acceleration.y*300.0f);
+        aalineRGBA(ren, pos.x, pos.y, pos.x + acceleration.x * 300.0f, pos.y + acceleration.y * 300.0f, 0, 255, 0, 255);
     }
 
     void printPos() const {
@@ -80,21 +77,8 @@ public:
     SDL_Color color;
 
     void draw() const {
-        SDL_SetRenderDrawColor(r, color);
-/*
-        SDL_RenderDrawLine(r, v1.x, v1.y, v2.x, v2.y);
-        SDL_RenderDrawLine(r, v2.x, v2.y, v3.x, v3.y);
-        SDL_RenderDrawLine(r, v3.x, v3.y, v1.x, v1.y);
-*/
-
-        for (int i = 0; i < sideLength; i++) { // VERY scuffed way to draw a triangle
-            SDL_RenderDrawLine(r, v1.x + ((v2.x-v1.x)/sideLength)*i,
-                                  v1.y + ((v2.y-v1.y)/sideLength)*i,
-                                  v1.x + ((v3.x-v1.x)/sideLength)*i,
-                                  v1.y + ((v3.y-v1.y)/sideLength)*i);
-        }
-
-
+        filledTrigonRGBA(ren, v1.x, v1.y, v2.x, v2.y, v3.x, v3.y,
+                         color.r, color.g, color.b, color.a);
     }
 
     void update() {

@@ -6,11 +6,12 @@
 
 #include "SDL/SDL.h"
 #include "SDL/SDL_image.h"
+#include "SDL/SDL_gfxPrimitives.h"
 
 #include "config.h"
 
-SDL_Renderer* r;
-SDL_Point windowPos = {0, 0};
+SDL_Renderer* ren;
+SDL_Window* win;
 
 #include "util.h"
 #include "object.h"
@@ -67,15 +68,15 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    SDL_Window* win = SDL_CreateWindow("Grav Sim",
-                                       SDL_WINDOWPOS_CENTERED, // x
-                                       SDL_WINDOWPOS_CENTERED, // y
-                                       1000,  // w
-                                       600, // h
-                                       0); // flag
+    win = SDL_CreateWindow("Grav Sim",
+                           SDL_WINDOWPOS_CENTERED, // x
+                           SDL_WINDOWPOS_CENTERED, // y
+                           1000,  // w
+                           600, // h
+                           0); // flag
 
-    r = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
-    SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
+    ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+    SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
     //int Object::objectCounter = 0;
 
@@ -103,9 +104,7 @@ int main(int argc, char *argv[]) {
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                     dragging = true;
-                    SDL_GetWindowPosition(win, &windowPos.x, &windowPos.y);
-                    GetCursorPos(reinterpret_cast<LPPOINT>(&currentPos));
-                    currentPos = currentPos-windowPos;
+                    currentPos = getLocalCursorPos();
                     if (selectedObject >= 0) objects[selectedObject]->selected = false;
                     selectedObject = getObjectFromPos(currentPos);
                     if (selectedObject >= 0) objects[selectedObject]->selected = true;
@@ -130,8 +129,7 @@ int main(int argc, char *argv[]) {
 
         if (dragging) {
             lastPos = currentPos;
-            GetCursorPos(reinterpret_cast<LPPOINT>(&currentPos));
-            currentPos = currentPos-windowPos;
+            currentPos = getLocalCursorPos();
             auto diffPos = Point{(float)currentPos.x-lastPos.x, (float)currentPos.y-lastPos.y};
             if (selectedObject == -1) {
                 for (auto &o: objects) {
@@ -143,10 +141,10 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        SDL_SetRenderDrawColor(r, cfg::bg);
+        SDL_SetRenderDrawColor(ren, cfg::bg);
 
         // clear the screen
-        SDL_RenderClear(r);
+        SDL_RenderClear(ren);
 
         if (paused) {
             for (auto & o : objects) {
@@ -190,7 +188,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        SDL_RenderPresent(r);
+        SDL_RenderPresent(ren);
 
         frame_time = SDL_GetTicks()-start_time;
 
@@ -204,7 +202,7 @@ int main(int argc, char *argv[]) {
     for (Object *o : objects) { free(o); }
     objects.clear();
 
-    SDL_DestroyRenderer(r);
+    SDL_DestroyRenderer(ren);
 
     SDL_DestroyWindow(win);
 
