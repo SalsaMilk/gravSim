@@ -5,7 +5,6 @@
 #include <ctime>
 
 #include "SDL/SDL.h"
-#include "SDL/SDL_image.h"
 #include "SDL/SDL_gfxPrimitives.h"
 
 #include "config.h"
@@ -15,13 +14,18 @@ SDL_Window* win;
 
 #include "util.h"
 #include "object.h"
-#include "menu.h"
+//#include "menu.h"
 
 std::vector<Object*> objects;
 std::vector<Debris*> extras;
 
-/* returns the target object's vector index
- * -1 if pos in open space */
+BOOL dragging = false;
+int selectedObject = -1;
+
+/*
+ * returns the target object's vector index
+ * -1 if pos in open space
+ */
 int getObjectFromPos(SDL_Point point) {
     for (int i = 0; i < objects.size(); i++) {
         float d = distance(Point{(float)point.x, (float)point.y}, objects[i]->pos);
@@ -31,8 +35,48 @@ int getObjectFromPos(SDL_Point point) {
     return -1;
 }
 
-BOOL dragging = false;
-int selectedObject = -1;
+/*
+ * It turns out this is VERY difficult to do
+ * https://en.wikipedia.org/wiki/Elastic_collision
+ * http://www.vobarian.com/bouncescope/
+ */
+void handleCollision(Object *o1, Object *o2) {
+    // Avoid division by zero below in computing new normal velocities
+    // Doing a collision where both balls have no mass makes no sense anyway
+    if (o1->mass == 0 && o2->mass == 0) return;
+
+    // Compute unit normal and unit tangent vectors
+    Vector2 v_n = o2->pos - o1->pos;                // normal vec
+    Vector2 v_un = vec_normalize(v_n);            // unit normal vector
+    auto v_ut = Vector2{-v_un.y, v_un.x};       // unit tangent vector
+
+    // Compute scalar projections of velocities onto v_un and v_ut using dot product
+    float v1n = v_un.x * o1->velocity.x + v_un.y * o1->velocity.y;
+    float v1t = v_ut.x * o1->velocity.x + v_ut.y * o1->velocity.y;
+    float v2n = v_un.x * o2->velocity.x + v_un.y * o2->velocity.y;
+    float v2t = v_ut.x * o2->velocity.x + v_ut.y * o2->velocity.y;
+
+    // Compute new tangential velocities
+    float v1tPrime = v1t; // Note: in reality, the tangential velocities do not change after the collision
+    float v2tPrime = v2t;
+
+    // Compute new normal velocities using one-dimensional elastic collision equations in the normal direction
+    // Division by zero avoided. See early return above.
+    float v1nPrime = (v1n * (o1->mass - o2->mass) + 2.0f * o2->mass * v2n) / (o1->mass + o2->mass);
+    float v2nPrime = (v2n * (o2->mass - o1->mass) + 2.0f * o1->mass * v1n) / (o1->mass + o2->mass);
+
+    // Compute new normal and tangential velocity vectors
+    Vector2 v_v1nPrime = v_un * v1nPrime;
+    Vector2 v_v1tPrime = v_ut * v1tPrime;
+    Vector2 v_v2nPrime = v_un * v2nPrime;
+    Vector2 v_v2tPrime = v_ut * v2tPrime;
+
+    // Set new velocities in x and y coordinates
+    o1->velocity.x = v_v1nPrime.x + v_v1tPrime.x;
+    o1->velocity.y = v_v1nPrime.y + v_v1tPrime.y;
+    o2->velocity.x = v_v2nPrime.x + v_v2tPrime.x;
+    o2->velocity.y = v_v2nPrime.y + v_v2tPrime.y;
+}
 
 void explode(Object *o) {
     for (int i = 0; i < o->radius/2; i++) {
@@ -68,22 +112,20 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    win = SDL_CreateWindow("Grav Sim",
-                           SDL_WINDOWPOS_CENTERED, // x
-                           SDL_WINDOWPOS_CENTERED, // y
-                           1000,  // w
-                           600, // h
-                           0); // flag
+    win = SDL_CreateWindow("Grav Sim",              // title
+                           SDL_WINDOWPOS_CENTERED,  // x
+                           SDL_WINDOWPOS_CENTERED,  // y
+                           1000,                    // w
+                           600,                     // h
+                           0);                      // flag
 
     ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
-    //int Object::objectCounter = 0;
-
     objects.push_back(new Object(500, 350, 50, 3000.0f, 0, 0, 255, 255, 0, 255));
     objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
-    objects.push_back(new Object(700, 350, 16, 30.0f, 0, 0, 0, 255, 255, 255));
-    objects.push_back(new Object(500, 550, 16, 30.0f, 4, 0, 0, 255, 255, 255));
+    objects.push_back(new Object(700, 350, 16, 30.0f, 0, 2, 0, 255, 255, 255));
+    objects.push_back(new Object(500, 550, 60, 30.0f, 4, 0, 0, 255, 255, 255));
     objects.push_back(new Object(500, 150, 16, 30.0f, -4, 0, 0, 255, 255, 255));
 
     // mouse drag variables
@@ -160,7 +202,7 @@ int main(int argc, char *argv[]) {
                     o1->acceleration = o1->acceleration + vec_normalize(o2->pos-o1->pos) * (force/(float)o1->mass);
 
                     if (distance(o1->pos+o1->velocity, o2->pos+o2->velocity) < o1->radius+o2->radius-3)
-                        o1->radius > o2->radius ? explode(o2) : explode(o1);
+                        handleCollision(o1, o2);
                 }
             }
         }

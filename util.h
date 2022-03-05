@@ -10,6 +10,7 @@
 
 #define ZEROTOHALF (((float) rand() / (RAND_MAX))/2)
 
+typedef unsigned char uchar;
 typedef struct {
     float x, y;
 } Vector2, Point;
