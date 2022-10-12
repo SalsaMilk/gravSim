@@ -122,10 +122,10 @@ int main(int argc, char *argv[]) {
     ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
-    objects.push_back(new Object(500, 350, 50, 3000.0f, 0, 0, 255, 255, 0, 255));
+    objects.push_back(new Object(500, 350, 30, 3000.0f, 0, 0, 255, 255, 0, 255));
     objects.push_back(new Object(300, 350, 16, 30.0f, 0, 4, 0, 255, 255, 255));
-    objects.push_back(new Object(700, 350, 16, 30.0f, 0, 2, 0, 255, 255, 255));
-    objects.push_back(new Object(500, 550, 60, 30.0f, 4, 0, 0, 255, 255, 255));
+    objects.push_back(new Object(700, 350, 16, 30.0f, 0, -4, 0, 255, 255, 255));
+    objects.push_back(new Object(500, 550, 16, 30.0f, 4, 0, 0, 255, 255, 255));
     objects.push_back(new Object(500, 150, 16, 30.0f, -4, 0, 0, 255, 255, 255));
 
     // mouse drag variables
@@ -188,16 +188,33 @@ int main(int argc, char *argv[]) {
         // clear the screen
         SDL_RenderClear(ren);
 
-        if (paused) {
-            for (auto & o : objects) {
-                o->acceleration = Vector2 {0, 0};
+        SDL_SetRenderDrawColor(ren, 255, 255, 255, 100);
+        if (cfg::show_grid) {
+            for (float y = 0; y <= 600; y += cfg::grid_scale) {
+                for (float x = 0; x <= 1000; x += cfg::grid_scale) {
+                    auto p = Point{x, y};
+                    Vector2 p2 = Vector2{0, 0};
+                    for (Object* obj : objects) {
+                        float dist = distance(obj->pos, p);
+                        float length = (obj->mass / (dist * dist)) * 80;
+                        if (length > cfg::grid_scale) length = cfg::grid_scale;
+                        p2 = p2 + vec_normalize(obj->pos-p) * length;
+                    }
+                    //aalineRGBA(ren, p.x, p.y, p.x+p2.x, p.y+p2.y, 255, 255, 255, 100);
+                    SDL_RenderDrawPoint(ren, p.x+p2.x, p.y+p2.y);
+                }
             }
         }
+
+        if (paused)
+            for (auto & o : objects)
+                o->acceleration = Vector2 {0, 0};
+
         for (Object* o1 : objects) {
             for (Object* o2 : objects) {
                 if (o1 != o2 && !(o1->selected && dragging)) {
                     float dist = distance(o1->pos, o2->pos);
-                    float force = (o1->mass*o2->mass)/(dist*dist);
+                    float force = (o1->mass*o2->mass) / (dist*dist);
 
                     o1->acceleration = o1->acceleration + vec_normalize(o2->pos-o1->pos) * (force/(float)o1->mass);
 
